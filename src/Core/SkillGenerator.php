@@ -51,6 +51,7 @@ class SkillGenerator
         return [
             'kodla:init' => $this->skillsDir . '/kodla-init/SKILL.md',
             'kodla:plan' => $this->skillsDir . '/kodla-plan/SKILL.md',
+            'kodla:improve' => $this->skillsDir . '/kodla-improve/SKILL.md',
         ];
     }
 }
