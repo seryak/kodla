@@ -49,9 +49,12 @@ class SkillGenerator
     private function getSkills(): array
     {
         return [
-            'kodla:init' => $this->skillsDir . '/kodla-init/SKILL.md',
-            'kodla:plan' => $this->skillsDir . '/kodla-plan/SKILL.md',
-            'kodla:improve' => $this->skillsDir . '/kodla-improve/SKILL.md',
+            'kodla:init'     => $this->skillsDir . '/kodla-init/SKILL.md',
+            'kodla:plan'     => $this->skillsDir . '/kodla-plan/SKILL.md',
+            'kodla:improve'  => $this->skillsDir . '/kodla-improve/SKILL.md',
+            'kodla:research'         => $this->skillsDir . '/kodla-research/SKILL.md',
+            'kodla:implement-plan'   => $this->skillsDir . '/kodla-implement-plan/SKILL.md',
+            'kodla:check-tasks'      => $this->skillsDir . '/kodla-check-tasks/SKILL.md',
         ];
     }
 }
