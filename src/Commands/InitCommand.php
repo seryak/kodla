@@ -13,20 +13,16 @@ class InitCommand extends Command
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $cwd = getcwd();
-        $generator = new SkillGenerator($cwd);
-        $generator->generate();
-
+        $generator = new SkillGenerator();
         $skills = $generator->getInstalledSkills();
-        $commandsDir = $generator->getCommandsDir();
-
-        foreach ($skills as $skill) {
-            $output->writeln("<info>Installed:</info> $commandsDir/$skill.md");
-        }
 
         if (empty($skills)) {
-            $output->writeln('<comment>No skills found to install.</comment>');
+            $output->writeln('<comment>No skills found.</comment>');
             return Command::FAILURE;
+        }
+
+        foreach ($skills as $skill) {
+            $output->writeln("<info>Available skill:</info> /$skill");
         }
 
         $output->writeln('');
