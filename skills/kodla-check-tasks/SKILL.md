@@ -3,8 +3,8 @@ name: kodla-check-tasks
 description: >-
   Проверить реализацию плана: все задачи выполнены, код рабочий, нет незавершённых маркеров.
   Используй после /kodla:implement-plan или когда нужно убедиться что "всё сделано".
-argument-hint: "[@plan-file]"
-allowed-tools: Read Glob Grep Bash(composer *) Bash(php *) Bash(./vendor/bin/*) TaskList TaskGet AskUserQuestion
+argument-hint: "[--strict] [@plan-file]"
+allowed-tools: Read Glob Grep Bash(composer *) Bash(php *) Bash(./vendor/bin/*) Bash(npm *) Bash(npx *) Bash(yarn *) Bash(pnpm *) Bash(bun *) Bash(go *) Bash(python *) Bash(cargo *) Bash(make *) Bash(task *) Bash(just *) Bash(mage *) TaskList TaskGet AskUserQuestion
 ---
 
 # Check Tasks — Проверка реализации плана
@@ -22,14 +22,29 @@ allowed-tools: Read Glob Grep Bash(composer *) Bash(php *) Bash(./vendor/bin/*) 
 **Прочитать `.kodla/config.yaml`** если существует, для извлечения:
 - `paths.plans` — директория планов (по умолчанию: `.kodla/plans/`)
 - `paths.description` — описание проекта (по умолчанию: `.kodla/DESCRIPTION.md`)
+- `paths.architecture` — архитектура проекта (по умолчанию: `.kodla/ARCHITECTURE.md`)
+- `paths.roadmap` — дорожная карта (по умолчанию: `.kodla/ROADMAP.md`)
+- `paths.specs` — директория требований, если настроена
 - `paths.rules` — директория правил (по умолчанию: `.kodla/rules/`)
+- `rules.base` и любые `rules.<area>` — иерархия правил
+- `workflow.verify_mode` — режим проверки: `normal` или `strict`
+
+**Режим проверки:**
+1. Флаг `--strict` → всегда strict
+2. `workflow.verify_mode` из конфига → если задан
+3. По умолчанию → normal
 
 Если конфиг не существует — использовать значения по умолчанию.
 
 ### 0.1 Читать контекст проекта
 
 - **Прочитать `.kodla/DESCRIPTION.md`** если существует — tech-стек, архитектура, соглашения
-- **Прочитать `.kodla/rules/base.md`** если существует — правила проекта
+- **Прочитать `.kodla/ARCHITECTURE.md`** если существует — границы модулей и правила зависимостей
+- **Прочитать `.kodla/rules/base.md`** и именованные правила из конфига — правила проекта
+- **Прочитать `.kodla/ROADMAP.md`** если существует — сверка с milestone, когда план содержит привязку
+- **Прочитать `.kodla/skill-context/kodla-check-tasks/SKILL.md`** если существует — правила проверки проекта имеют приоритет над общими инструкциями
+
+Если skill-context требует дополнительные секции отчёта или проверки — добавь их в отчёт.
 
 ### 0.2 Обнаружение плана
 
@@ -62,6 +77,12 @@ allowed-tools: Read Glob Grep Bash(composer *) Bash(php *) Bash(./vendor/bin/*) 
 **Прочитать файл плана** для понимания:
 - Списка задач (чекбоксы `- [ ]` и `- [x]`)
 - Контекста задач
+- Настроек плана: тесты, логирование, документация, roadmap linkage
+
+**Определить проверяемые файлы:**
+- В первую очередь взять пути, явно упомянутые в задачах плана
+- Дополнительно учесть файлы из tasar `design.md` / `specs/*.md`, если план находится в `tasar/changes/<name>/`
+- Если путей нет — проверять релевантные директории проекта (`src/`, `app/`, `bin/`, `scripts/`, `docs/`) по смыслу задач
 
 ---
 
@@ -110,7 +131,20 @@ TaskGet(taskId) → полное описание, требования, кон�
 
 ## Шаг 2: Проверка качества кода
 
-### 2.1 Проверка зависимостей
+### 2.1 Build / compile / dependency check
+
+Определи стек и выполни применимые команды:
+
+| Обнаружение | Команда |
+|-------------|---------|
+| `go.mod` | `go build ./...` |
+| `tsconfig.json` | `npx tsc --noEmit` |
+| `package.json` с `build` script | `npm run build` / подходящий package manager |
+| `pyproject.toml` | `python -m py_compile` для изменённых `.py` файлов |
+| `Cargo.toml` | `cargo check` |
+| `composer.json` | `composer validate` |
+
+Если команда недоступна или проект не настроен — отметить как "не применимо" или "инструмент не установлен", не считать провалом в normal mode.
 
 ```bash
 # Если есть composer.json
@@ -121,6 +155,16 @@ composer validate
 
 ### 2.2 Запуск тестов
 
+Запускай тесты только если они существуют и тесты были частью плана, либо если включён strict mode.
+
+| Обнаружение | Команда |
+|-------------|---------|
+| `package.json` с `test` script | `npm test` / подходящий package manager |
+| `pytest` | `pytest` |
+| `go.mod` | `go test ./...` |
+| `phpunit.xml*` | `./vendor/bin/phpunit` |
+| `Cargo.toml` | `cargo test` |
+
 ```bash
 # Если есть phpunit.xml или phpunit.xml.dist
 ./vendor/bin/phpunit
@@ -129,6 +173,15 @@ composer validate
 Если phpunit не настроен — отметить "тесты не настроены" и продолжить.
 
 ### 2.3 Проверка стиля кода
+
+Если линтеры настроены — проверяй только релевантные файлы, когда инструмент это поддерживает.
+
+| Обнаружение | Команда |
+|-------------|---------|
+| `eslint.config.*` / `.eslintrc*` | `npx eslint <файлы>` |
+| `.golangci.yml` | `golangci-lint run ./...` |
+| `ruff` в `pyproject.toml` | `ruff check <файлы>` |
+| `.php-cs-fixer*` | `./vendor/bin/php-cs-fixer fix --dry-run --diff` |
 
 ```bash
 # Если есть .php-cs-fixer.php или .php-cs-fixer.dist.php
@@ -143,7 +196,15 @@ composer validate
 
 ## Шаг 3: Проверка согласованности
 
-### 3.1 Незавершённые маркеры
+### 3.1 Plan vs code drift
+
+Проверить расхождения между планом и реализацией:
+- Имена функций, классов, endpoint-ов и CLI-команд совпадают с планом
+- Файлы находятся там где указано в плане
+- API/CLI контракты соответствуют описанию задачи
+- Документационный checkpoint выполнен, если план требовал документацию
+
+### 3.2 Незавершённые маркеры
 
 Поиск в изменённых файлах (файлы упомянутые в задачах или `src/`):
 
@@ -153,21 +214,43 @@ Grep: TODO|FIXME|HACK|TEMP|PLACEHOLDER
 
 Найденные маркеры — не обязательно ошибка, но нужно показать.
 
-### 3.2 Debug-вывод
+### 3.3 Debug-вывод
 
 ```
-Grep: var_dump\(|dd\(|print_r\(|dump\(
+Grep: var_dump\(|dd\(|print_r\(|dump\(|console\.log\(.*debug|print\(.*debug
 ```
 
 Debug-вывод в коде — признак незавершённости.
 
-### 3.3 Переменные окружения
+### 3.4 Переменные окружения
 
 ```
-Grep: env\(|getenv\(|\$_ENV\[|\$_SERVER\[
+Grep: env\(|getenv\(|\$_ENV\[|\$_SERVER\[|process\.env\.|os\.Getenv\(|os\.environ|config\(
 ```
 
 Проверить что новые переменные задокументированы в `.env.example`, `README.md` или аналогичных файлах.
+
+### 3.5 Context gates
+
+Проверить и явно отразить в отчёте:
+- **Architecture gate** — реализация не нарушает `.kodla/ARCHITECTURE.md`
+- **Rules gate** — реализация следует `.kodla/rules/*`
+- **Roadmap gate** — работа не противоречит `.kodla/ROADMAP.md`, а если план содержит `Roadmap Linkage`, она соответствует выбранному milestone
+
+Формат:
+- `WARN [architecture] ...` — неоднозначность или устаревшая карта
+- `ERROR [architecture] ...` — явное нарушение архитектурного правила
+- Аналогично для `rules` и `roadmap`
+
+### 3.6 Context drift
+
+Навык read-only: не исправляй контекстные артефакты автоматически.
+
+Если обнаружено что контекст устарел:
+- DESCRIPTION drift → предложить обновить через `/kodla-init` или точечную правку владельцем
+- ARCHITECTURE drift → предложить обновить `.kodla/ARCHITECTURE.md`
+- ROADMAP drift → предложить отдельную проверку roadmap
+- Rules drift → предложить `/kodla-evolve` или обновление `.kodla/rules/`
 
 ---
 
@@ -191,8 +274,10 @@ Grep: env\(|getenv\(|\$_ENV\[|\$_SERVER\[
 
 ### Качество кода
 - Composer: ✅ Валидация прошла
+- Build: ✅ Сборка прошла
 - Тесты: ✅ 15/15 прошли
 - Стиль: ⚠️ 2 предупреждения в src/Controllers/UserController.php
+- Context gates: WARN [roadmap] milestone не указан
 
 ### Найденные проблемы
 1. **Задача #3 не завершена** — нет правила валидации для поля email
@@ -222,6 +307,7 @@ Grep: env\(|getenv\(|\$_ENV\[|\$_SERVER\[
 3. Удалить var_dump() в src/Services/UserService.php:45
 
 Запусти /kodla:implement-plan чтобы продолжить реализацию.
+Для точечных багов запусти /kodla-fix <описание проблемы>.
 ```
 
 Если всё зелёно:
@@ -247,9 +333,24 @@ Grep: env\(|getenv\(|\$_ENV\[|\$_SERVER\[
 ### Явное указание файла плана
 
 ```
-/kodla:check-tasks @tasar/changes/my-feature/tasks.md
+/kodla:check-tasks --strict @tasar/changes/my-feature/tasks.md
 /kodla:check-tasks @.kodla/plans/refactor-api.md
 ```
+
+### Strict mode
+
+```
+/kodla:check-tasks --strict @tasar/changes/my-feature/tasks.md
+```
+
+В strict mode:
+- Все задачи должны быть `ВЫПОЛНЕНО`; `ЧАСТИЧНО`, `НЕ НАЙДЕНО` и `ПРОПУЩЕНО` считаются проблемой
+- Build должен пройти
+- Если тесты настроены — они должны пройти
+- Линтер должен пройти без ошибок
+- Не должно быть незавершённых маркеров и debug-вывода
+- Новые переменные окружения должны быть документированы
+- Architecture/rules gates не должны иметь `ERROR`
 
 ---
 
@@ -260,3 +361,5 @@ Grep: env\(|getenv\(|\$_ENV\[|\$_SERVER\[
 - Не предлагать commit или другие git-операции
 - Проверять фактическое содержимое кода, а не просто наличие файлов
 - Если качество-инструмент не настроен — отметить и продолжить, не считать это провалом
+- В strict mode отсутствующий обязательный инструмент или неполная проверка повышает серьёзность вывода
+- Если есть проблемы — сначала рекомендовать `/kodla-fix`, затем повторный `/kodla-check-tasks`

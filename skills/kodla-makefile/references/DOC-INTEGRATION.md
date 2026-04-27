@@ -87,7 +87,7 @@ Options:
 ```
 
 If the user chooses to create it, generate a minimal `AGENTS.md` with:
-- Project name and brief description (from `PROJECT_PROFILE` or `.ai-factory/DESCRIPTION.md`)
+- Project name and brief description (from `PROJECT_PROFILE` or `.kodla/DESCRIPTION.md`)
 - Build commands section (as above)
 - Key project conventions (language, test framework, linter — so AI agents run the right commands)
 

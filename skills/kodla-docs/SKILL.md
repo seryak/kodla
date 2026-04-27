@@ -555,9 +555,9 @@ AskUserQuestion: Оригиналы больше не нужны. Удалить
 
 ---
 
-## Актуализация по AI Factory
+## Актуализация
 
-Сверка с `aif-docs` подтверждает обязательные элементы:
+Сверка с исходным навыком документации подтверждает обязательные элементы:
 
 - README остаётся landing page, а детальные материалы выносятся в `docs/` или путь из `paths.docs`.
 - При генерации с нуля выбирать темы документации по фактическому проекту: getting-started, architecture, api, configuration, deployment, contributing, security, testing, cli.
