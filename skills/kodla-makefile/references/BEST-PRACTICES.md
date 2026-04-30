@@ -603,3 +603,104 @@ BUILD_TIME = date -u +%Y-%m-%dT%H:%M:%SZ
 - **Taskfile**: Use `dotenv: ['.env']`
 - **Justfile**: Use `set dotenv-load`
 - **Magefile**: Use `godotenv` package or manual `os.Getenv`
+- **Castor**: Use `load_dot_env()` function or read via `getenv()`
+
+---
+
+## 6. Castor (PHP task runner)
+
+Castor is a PHP-native task runner. Tasks are defined as PHP functions decorated with the `#[AsTask]` attribute. **Only applicable to PHP projects.**
+
+### File Structure
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Castor\Attribute\AsTask;
+
+use function Castor\run;
+use function Castor\capture;
+use function Castor\io;
+```
+
+### Task Declaration
+
+Every function with `#[AsTask]` becomes a task. The `description` parameter is mandatory — tasks without it are hidden from `castor list`:
+
+```php
+#[AsTask(description: 'Install project dependencies')]
+function install(): void
+{
+    run('composer install');
+}
+```
+
+### Grouping with PHP Namespaces
+
+Use PHP namespaces to group related tasks. Namespace segments are joined with `:` in the task name:
+
+```php
+namespace dev;
+
+#[AsTask(description: 'Start development server')]
+function serve(): void
+{
+    run('php -S localhost:8000 -t public/');
+}
+```
+
+Run: `castor dev:serve`
+
+### Process Execution
+
+```php
+// Stream output to terminal
+run('composer install');
+run(['php', 'artisan', 'migrate']);   // array form — safe, no shell interpolation
+
+// Capture output as string
+$version = capture('git describe --tags --always --dirty');
+
+// Allow failure, get exit code
+$code = exit_code('php vendor/bin/phpunit');
+```
+
+**Always prefer array form** when arguments contain user input or variables — avoids shell injection.
+
+### Console I/O
+
+```php
+io()->title('Running CI pipeline');
+io()->success('All checks passed!');
+io()->warning('This will drop all tables. Ctrl+C to abort.');
+io()->error('Tests failed.');
+```
+
+### Installation
+
+**Global PHAR (recommended — no project dependency):**
+```bash
+curl "https://github.com/jolicode/castor/releases/latest/download/castor.linux-amd64.phar" \
+  -Lo $HOME/.local/bin/castor && chmod u+x $HOME/.local/bin/castor
+```
+
+**Per-project via Composer (for teams with locked versions):**
+```bash
+composer require castor/castor --dev
+./vendor/bin/castor
+```
+
+### Detecting Castor in a Project
+
+- `castor.php` in the repository root
+- `.castor/castor.php` (multi-file layout)
+
+### Anti-Patterns to Avoid
+
+- **Never call `exit()`** — throw exceptions or let Castor handle exit codes
+- **Never use shell strings with variable input** — use array form in `run(['cmd', $arg])` to prevent injection
+- **Never omit `description`** — tasks without it are invisible in `castor list`
+- **Never duplicate shell logic** — extract helpers as plain PHP functions, tasks can call each other directly
+- **Never use Castor for non-PHP projects** — it requires PHP runtime and is not cross-language

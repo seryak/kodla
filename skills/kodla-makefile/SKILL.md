@@ -4,7 +4,7 @@ description: >-
   Анализирует проект и генерирует или улучшает файл автоматизации сборки (Makefile, Taskfile.yml, Justfile, Magefile.go).
   Если build-файл уже существует — улучшает его, добавляя недостающие цели и лучшие практики.
   Используй когда пользователь говорит "создай makefile", "добавь taskfile", "сгенерируй justfile", "настрой mage", "автоматизация сборки".
-argument-hint: "[makefile|taskfile|justfile|mage]"
+argument-hint: "[makefile|taskfile|justfile|mage|castor]"
 allowed-tools: Read Edit Glob Grep Write Bash(git *) AskUserQuestion Questions
 disable-model-invocation: false
 metadata:
@@ -62,7 +62,7 @@ Read .kodla/DESCRIPTION.md
 Прежде всего проверь есть ли в проекте уже build-автоматизация:
 
 ```
-Glob: Makefile, makefile, GNUmakefile, Taskfile.yml, Taskfile.yaml, taskfile.yml, justfile, Justfile, .justfile, magefile.go, magefiles/*.go
+Glob: Makefile, makefile, GNUmakefile, Taskfile.yml, Taskfile.yaml, taskfile.yml, justfile, Justfile, .justfile, magefile.go, magefiles/*.go, castor.php, .castor/castor.php
 ```
 
 Создай список `EXISTING_FILES` из результатов.
@@ -99,8 +99,23 @@ AskUserQuestion: В проекте несколько build-файлов. Как
 | `taskfile` или `task` | Taskfile | `Taskfile.yml` |
 | `justfile` или `just` | Just | `justfile` |
 | `mage` или `magefile` | Mage | `magefile.go` |
+| `castor` | Castor | `castor.php` |
 
-- Если `$ARGUMENTS` пуст или не совпадает — спроси интерактивно:
+- Если `$ARGUMENTS` пуст или не совпадает — спроси интерактивно.
+
+**Для PHP-проектов** (`language == "PHP"`):
+
+```
+AskUserQuestion: Какой инструмент автоматизации сборки сгенерировать?
+
+Варианты:
+1. Makefile — GNU Make (универсальный, не требует установки)
+2. Taskfile.yml — Task runner (YAML, современный, кросс-платформенный)
+3. justfile — Just command runner (простой, быстрый, эргономичный)
+4. castor.php — Castor (нативный PHP, задачи на PHP, богатые хелперы)
+```
+
+**Для не-PHP-проектов**:
 
 ```
 AskUserQuestion: Какой инструмент автоматизации сборки сгенерировать?
@@ -111,6 +126,8 @@ AskUserQuestion: Какой инструмент автоматизации сб
 3. justfile — Just command runner (простой, быстрый, эргономичный)
 4. magefile.go — Mage (нативный Go, типизированный, без shell-скриптов)
 ```
+
+**Ограничение Castor:** если `castor` выбран или передан в аргументе, но `language != "PHP"` — объясни что Castor PHP-специфичен и требует PHP runtime, предложи Makefile как ближайшую альтернативу. Спроси через `AskUserQuestion` продолжать ли с Makefile.
 
 Сохрани выбранный инструмент как `TARGET_TOOL`.
 
@@ -294,10 +311,13 @@ Read references/BEST-PRACTICES.md
 | Taskfile | `taskfile-go.yml` | `taskfile-node.yml` | `taskfile-python.yml` | `taskfile-php.yml` | Используй ближайший |
 | Justfile | `justfile-go` | `justfile-node` | `justfile-python` | `justfile-php` | Используй ближайший |
 | Magefile | `magefile-basic.go` | `magefile-full.go` | `magefile-full.go` | N/A (используй Makefile) | `magefile-basic.go` |
+| Castor | N/A | N/A | N/A | `castor-php.php` | N/A (только PHP) |
 
 Для Magefile: используй `magefile-full.go` если `HAS_DOCKER` или `has_migrations` истинно, иначе `magefile-basic.go`.
 
 Для PHP + Magefile: Mage специфичен для Go и не применим к PHP-проектам. Если пользователь явно запросил `mage` для PHP, объясни это и предложи Makefile как ближайшую альтернативу (универсальный, не требует установки). Спроси через `AskUserQuestion` продолжать ли с Makefile.
+
+Для Castor + не-PHP: Castor специфичен для PHP и требует PHP runtime. Объясни это и предложи Makefile. Спроси через `AskUserQuestion`.
 
 Прочитай выбранный шаблон:
 
@@ -398,6 +418,28 @@ docker-shell:        ## Открыть shell внутри запущенного
 - **Команды миграций**: Точно соответствует обнаруженному инструменту миграций
 - **Номера портов**: Используй умолчания фреймворка (3000 для Node, 8000 для Python, 8080 для Go)
 
+#### Генерация Castor-файла (castor.php)
+
+Когда `TARGET_TOOL = "castor"`:
+
+1. **Выходной файл:** `castor.php` в корне проекта
+2. **Все задачи** объявляются через атрибут `#[Castor\Attribute\AsTask(description: '...')]` — `description` обязателен
+3. **Группировка** через PHP-пространства имён (`namespace dev;`, `namespace test;`, и т.д.)
+4. **Используй `run()`** для shell-команд, `capture()` для захвата вывода, `io()` для вывода пользователю
+5. **Предпочитай массивный формат** `run(['php', 'artisan', $arg])` вместо строки — безопаснее
+6. **Условная генерация задач** аналогична другим инструментам:
+   - Laravel → задачи для `artisan`: `dev:serve`, `db:migrate`, `db:seed`, `db:fresh`, `cache-clear`, `optimize`
+   - Symfony → задачи для `bin/console`: `dev:serve`, `db:migrate`, `cache-clear`
+   - PHPUnit → задачи `test:run-tests`, `test:coverage`, `test:filter`
+   - Pest → `./vendor/bin/pest` вместо `./vendor/bin/phpunit`
+   - PHP-CS-Fixer → `quality:lint`, `quality:fmt`
+   - Pint (Laravel) → `./vendor/bin/pint`
+   - PHPStan → `quality:phpstan`
+   - Docker → `docker:build`, `docker:up`, `docker:down`, `docker:logs` через `run()`
+7. **Добавляй вспомогательные функции** вне namespace для общего кода (`php_bin()`, `composer_bin()`, `project_version()`)
+8. **Опасные операции** (migrate:fresh, clean) — добавляй `io()->warning()` + `sleep(3)` перед выполнением
+9. **Установочная подсказка** в итоговом отчёте (Шаг 6): покажи команды установки Castor глобально и через Composer
+
 ### Режим A — Улучшение существующего файла
 
 Когда `MODE = "enhance"` — НЕ заменяй файл целиком. Вместо этого анализируй и улучшай точечно.
@@ -481,6 +523,7 @@ CHANGES = [
 | Taskfile | `Taskfile.yml` |
 | Justfile | `justfile` |
 | Magefile | `magefile.go` |
+| Castor | `castor.php` |
 
 **Режим A (Улучшение существующего):**
 
@@ -489,6 +532,23 @@ CHANGES = [
 ### 6.2 Отображение итогов
 
 Отображай итоги в формате из `references/SUMMARY-FORMAT.md`. Показывает таблицу целей, использованный профиль проекта и команду быстрого старта для Режима B (генерация), или что изменилось + новые/существующие цели для Режима A (улучшение). Включай подсказки по установке если инструмент требует настройки.
+
+**Для Castor** — обязательно добавляй в итоговый отчёт блок установки:
+
+```
+## Установка Castor
+
+Глобально (рекомендуется):
+  curl "https://github.com/jolicode/castor/releases/latest/download/castor.linux-amd64.phar" \
+    -Lo $HOME/.local/bin/castor && chmod u+x $HOME/.local/bin/castor
+
+Или через Composer (per-project):
+  composer require castor/castor --dev
+
+Запуск задач:
+  castor          — список всех задач
+  castor dev:serve — запустить конкретную задачу
+```
 
 ---
 
