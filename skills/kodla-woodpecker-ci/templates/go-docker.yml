@@ -1,0 +1,30 @@
+# Template: Go project, single docker backend
+# All steps run in Docker containers on a docker-backend Woodpecker agent
+#
+# Substitutions:
+#   {{BRANCH}}       - target branch (e.g. master, main)
+#   {{PROJECT_NAME}} - project name from go.mod or directory
+
+labels:
+  backend: docker
+
+when:
+  - event: push
+    branch: {{BRANCH}}
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      lfs: false  # REQUIRED: prevents "git: 'lfs' is not a git command" error
+
+steps:
+  - name: test
+    image: golang:1.23-alpine
+    commands:
+      - go test ./...
+
+  - name: build
+    image: golang:1.23-alpine
+    commands:
+      - go build -o {{PROJECT_NAME}} ./...

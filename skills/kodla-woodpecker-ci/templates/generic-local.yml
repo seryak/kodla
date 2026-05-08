@@ -1,0 +1,34 @@
+# Template: Universal pipeline, local backend (WOODPECKER_BACKEND=local)
+# Steps run as processes directly on the host — no Docker containers
+#
+# IMPORTANT: On local backend, "image:" = shell executable on host (bash, sh, zsh)
+#            NOT a Docker image name. Using a Docker image name here causes:
+#            exec: "alpine": executable file not found in $PATH
+#
+# Substitutions:
+#   {{BRANCH}}       - target branch (e.g. master, main)
+#   {{PROJECT_NAME}} - project name or directory
+
+when:
+  - event: push
+    branch: {{BRANCH}}
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      lfs: false  # REQUIRED: prevents "git: 'lfs' is not a git command" error
+
+steps:
+  - name: build
+    # On local backend: use shell name available on the host
+    image: bash
+    commands:
+      - echo "Running build for {{PROJECT_NAME}}"
+      - # Add your build commands here
+
+  - name: deploy
+    image: bash
+    commands:
+      - echo "Deploying {{PROJECT_NAME}}"
+      - # Add your deploy commands here

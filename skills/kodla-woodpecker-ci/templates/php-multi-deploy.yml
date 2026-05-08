@@ -1,0 +1,25 @@
+# Template: PHP multi-backend — DEPLOY step (runs on local agent)
+# Pair with php-multi-build.yml → generates .woodpecker/deploy.yml
+#
+# Substitutions:
+#   {{BRANCH}}        - target branch (e.g. master, main)
+#   {{PROJECT_NAME}}  - project name from composer.json or directory
+#   {{DEPLOY_SCRIPT}} - absolute path to deploy script on host (e.g. /var/www/myapp/deploy.sh)
+
+labels:
+  backend: local
+
+depends_on:
+  - build
+
+when:
+  - event: push
+    branch: {{BRANCH}}
+
+steps:
+  - name: deploy
+    # On local backend: image = shell executable on host, NOT a Docker image name
+    image: bash
+    commands:
+      - cp /tmp/woodpecker-build/{{PROJECT_NAME}}.tar.gz /tmp/{{PROJECT_NAME}}.tar.gz
+      - {{DEPLOY_SCRIPT}}

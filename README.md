@@ -421,6 +421,57 @@ AI несколько раз предложил прямые Eloquent-запро
 
 ---
 
+### kodla-woodpecker-ci
+
+**Генерирует конфигурации Woodpecker CI pipeline в `.woodpecker/` — с учётом типа backend и без типичных ошибок.**
+
+Анализирует tech-стек (PHP, Node.js, Go) через `.kodla/config.yaml` или файловые маркеры. Предлагает три варианта backend: docker, local или multi (build в Docker + deploy на хосте). Применяет best practices из документации и предотвращает 6 типичных ошибок конфигурации.
+
+#### Когда использовать
+
+- Нужно настроить CI для проекта с Woodpecker CI
+- Хотите multi-backend пайплайн: сборка в Docker, деплой напрямую на сервере
+- После настройки сервера — добавить `.woodpecker/` конфиги не вспоминая детали синтаксиса
+
+#### Примеры
+
+**PHP-проект с деплоем на тот же сервер**
+
+Laravel-проект, Woodpecker стоит на том же сервере. Запускаете `/kodla-woodpecker-ci`. Скилл определяет PHP по `composer.json`, предлагает multi-backend. Создаёт два файла:
+
+```yaml
+# .woodpecker/build.yml — на docker-агенте
+steps:
+  - name: install
+    image: composer:2   # Docker контейнер
+  - name: package
+    image: alpine:3.20  # создаёт tar-архив в /tmp/woodpecker-build/
+
+# .woodpecker/deploy.yml — на local-агенте
+depends_on: [build]
+steps:
+  - name: deploy
+    image: bash         # shell на хосте, не Docker image
+    commands:
+      - /var/www/myapp/deploy.sh
+```
+
+Автоматически добавляет `lfs: false` (предотвращает `git: 'lfs' is not a git command`) и tar-fix через `/tmp` (предотвращает `file changed as we read it`).
+
+**Node.js проект, только тесты**
+
+```
+/kodla-woodpecker-ci node
+```
+
+Создаёт `.woodpecker/pipeline.yml` с `node:22-alpine`, `npm ci` + `npm test`.
+
+#### Не делает
+
+Не устанавливает и не настраивает сервер Woodpecker CI, не генерирует systemd-юниты или docker-compose для самого Woodpecker.
+
+---
+
 ## Tasar
 
 Tasar — система управления изменениями, встроенная в kodla. Каждое нетривиальное изменение проходит полный цикл: предложение → дизайн → задачи → реализация → архив. Артефакты хранятся в `tasar/changes/<name>/` и синхронизируются со спеками проекта.
@@ -535,6 +586,9 @@ Tasar — система управления изменениями, встро
 
 Добавить автоматизацию в любой момент:
   kodla-makefile (независимо от других скиллов)
+
+Настроить CI/CD пайплайн:
+  kodla-woodpecker-ci (независимо от других скиллов)
 
 С tasar (сложные изменения с документацией):
   tasar-propose → tasar-apply → tasar-archive

@@ -1,0 +1,30 @@
+# Template: PHP project, single docker backend
+# All steps run in Docker containers on a docker-backend Woodpecker agent
+#
+# Substitutions:
+#   {{BRANCH}}       - target branch (e.g. master, main)
+#   {{PROJECT_NAME}} - project name from composer.json or directory
+
+labels:
+  backend: docker
+
+when:
+  - event: push
+    branch: {{BRANCH}}
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      lfs: false  # REQUIRED: Woodpecker agents don't have git-lfs installed by default
+
+steps:
+  - name: install
+    image: composer:2
+    commands:
+      - composer install --no-interaction --prefer-dist --optimize-autoloader
+
+  - name: test
+    image: php:8.3-cli
+    commands:
+      - vendor/bin/phpunit --no-coverage

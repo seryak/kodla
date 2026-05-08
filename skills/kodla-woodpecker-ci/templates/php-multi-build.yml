@@ -1,0 +1,37 @@
+# Template: PHP multi-backend — BUILD step (runs on docker agent)
+# Pair with php-multi-deploy.yml → generates .woodpecker/build.yml
+#
+# Substitutions:
+#   {{BRANCH}}        - target branch (e.g. master, main)
+#   {{PROJECT_NAME}}  - project name from composer.json or directory
+
+labels:
+  backend: docker
+
+when:
+  - event: push
+    branch: {{BRANCH}}
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      lfs: false  # REQUIRED: prevents "git: 'lfs' is not a git command" error
+
+steps:
+  - name: install
+    image: composer:2
+    commands:
+      - composer install --no-interaction --prefer-dist --optimize-autoloader
+
+  - name: package
+    image: alpine:3.20
+    # requires: Trust enabled in repository Settings UI
+    # requires: WOODPECKER_BACKEND_DOCKER_VOLUMES=/tmp/woodpecker-build:/tmp/woodpecker-build on docker agent
+    volumes:
+      - /tmp/woodpecker-build:/out
+    commands:
+      - apk add --no-cache tar gzip
+      # Write to /tmp first — avoids "file changed as we read it" tar error
+      - tar --exclude='.git' --exclude='vendor' -czf /tmp/{{PROJECT_NAME}}.tar.gz .
+      - mv /tmp/{{PROJECT_NAME}}.tar.gz /out/{{PROJECT_NAME}}.tar.gz
