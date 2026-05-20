@@ -265,6 +265,38 @@ Request → NotificationController
 
 ---
 
+### kodla-commit
+
+**Создаёт коммит по Conventional Commits — анализирует staged-изменения и предлагает семантическое сообщение.**
+
+Определяет тип (`feat`, `fix`, `refactor`, `ci`…) и scope по путям файлов, генерирует сообщение в соответствии со спецификацией. При наличии несвязанных изменений предлагает разбить на отдельные коммиты. После коммита предлагает push.
+
+#### Когда использовать
+
+- После реализации фичи или исправления — быстро сформировать правильное сообщение коммита
+- Хотите убедиться что коммит следует конвенции проекта
+- Staged-изменения смешивают несколько логических единиц — нужно разбить
+
+#### Примеры
+
+**Обычный коммит**
+
+Staged: изменения в `src/auth/` и `tests/auth/`. Запускаете `/kodla-commit`. Скилл предлагает:
+```
+feat(auth): add JWT refresh token rotation
+```
+Подтверждаете — коммит создан, предлагает `git push`.
+
+**Несвязанные изменения**
+
+Staged: правки в `UserService` (баг) и новый `ExportController` (фича). Скилл замечает два логических блока, предлагает разбить на два коммита: `fix(users)` и `feat(export)`. Вы подтверждаете — коммиты создаются последовательно.
+
+#### Не делает
+
+Не добавляет файлы в staged (только читает `git diff --cached`), не пушит без подтверждения, не добавляет AI co-author строки.
+
+---
+
 ### kodla-fix
 
 **Исправляет конкретный баг или проблему — немедленно или через план.**
@@ -567,19 +599,19 @@ Tasar — система управления изменениями, встро
 
 ```
 Новый проект:
-  kodla-init → kodla-plan → kodla-implement-plan → kodla-check-tasks
+  kodla-init → kodla-plan → kodla-implement-plan → kodla-check-tasks → kodla-commit
 
 Сложная фича (есть сомнения в подходе):
-  kodla-research → kodla-plan → kodla-improve → kodla-implement-plan → kodla-check-tasks
+  kodla-research → kodla-plan → kodla-improve → kodla-implement-plan → kodla-check-tasks → kodla-commit
 
 Быстрая фича (подход ясен):
-  kodla-plan → kodla-implement-plan
+  kodla-plan → kodla-implement-plan → kodla-commit
 
 Улучшение готового плана:
   kodla-improve → kodla-implement-plan
 
 Исправить баг:
-  kodla-fix
+  kodla-fix → kodla-commit
 
 Документировать проект:
   kodla-docs
