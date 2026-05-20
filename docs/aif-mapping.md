@@ -19,6 +19,7 @@
 | `kodla-rules` | `aif-rules` |
 | `kodla-woodpecker-ci` | `aif-ci` |
 | `kodla-commit` | `aif-commit` |
+| `kodla-reference` | `aif-reference` |
 
 
 ---
@@ -42,6 +43,7 @@
 | `aif-rules-ru.md` | Правила и конвенции |
 | `aif-ci-ru.md` | CI/CD пайплайны |
 | `aif-commit-ru.md` | Conventional Commits |
+| `aif-reference-ru.md` | База знаний (references) |
 
 ### Планируются к миграции
 
@@ -50,7 +52,6 @@
 | `aif-rules-check-ru.md` | Проверка соблюдения правил |
 | `aif-best-practices-ru.md` | Чистота кода |
 | `aif-dockerize-ru.md` | Docker-конфигурация |
-| `aif-reference-ru.md` | База знаний (references) |
 | `aif-review-ru.md` | Code Review |
 
 
