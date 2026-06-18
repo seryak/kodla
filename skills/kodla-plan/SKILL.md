@@ -2,7 +2,7 @@
 name: kodla-plan
 description: Создать план реализации фичи или задачи. Задаёт вопросы о предпочтениях, исследует кодовую базу, сохраняет план в .kodla/plans/. Если в проекте есть папка tasar или .tasar — автоматически выполняет workflow /tasar-propose.
 argument-hint: "<описание фичи или задачи>"
-allowed-tools: Read Write Glob Grep Bash(mkdir *) Bash(kodla *) Bash(ls *) Bash(test *) AskUserQuestion Agent
+allowed-tools: Read Glob Grep Bash(mkdir *) Bash(kodla *) Bash(ls *) Bash(test *) AskUserQuestion Agent
 version: 1.0.0
 ---
 

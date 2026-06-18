@@ -2,7 +2,7 @@
 name: kodla-implement-plan
 description: Выполнить задачи из плана последовательно, отслеживать прогресс и продолжать между сессиями. Используй когда пользователь говорит "реализуй", "начни кодить", "выполни план", "продолжи реализацию".
 argument-hint: '[--list] [@plan-file] [номер-задачи | "status"]'
-allowed-tools: Read Write Edit Glob Grep Bash TaskList TaskGet TaskUpdate AskUserQuestion Agent
+allowed-tools: Read Glob Grep TaskList TaskGet TaskUpdate AskUserQuestion Agent
 ---
 
 # Implement Plan — Выполнение плана реализации
