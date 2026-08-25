@@ -531,6 +531,50 @@ steps:
 
 ---
 
+### kodla-larastan
+
+**Устанавливает и настраивает статический анализ PHPStan/Larastan для Laravel-проекта.**
+
+Определяет Laravel по `laravel/framework` в `composer.json`. Устанавливает `larastan/larastan`, `shipmonk/dead-code-detector`, `tomasvotruba/bladestan` (только отсутствующие пакеты), генерирует `phpstan.neon` с правильным набором `includes` и стартовым `level: 5`. Поднимает лимит памяти по умолчанию через `composer.json` → `scripts.analyse`, чтобы не набирать `--memory-limit=1G` вручную. Для проектов с накопленным кодом предлагает сгенерировать `phpstan-baseline.neon`.
+
+#### Когда использовать
+
+- Новый Laravel-проект — нужен статический анализ с нуля
+- Существующий Laravel-проект без PHPStan — хотите начать ловить только новые ошибки, не утонув в старых
+- `phpstan.neon` уже есть, но не хватает `bladestan`/`dead-code-detector` — нужно точечно дополнить
+
+#### Примеры
+
+**Новый Laravel-проект**
+
+Запускаете `/kodla-larastan`. Скилл находит `laravel/framework`, ставит три пакета, создаёт `phpstan.neon`:
+
+```neon
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+    - vendor/tomasvotruba/bladestan/config/extension.neon
+    - vendor/shipmonk/dead-code-detector/rules.neon
+
+parameters:
+    level: 5 #Level лучше постепенно поднимать до 8–max.
+    paths:
+        - app/
+        - routes/
+```
+
+Добавляет в `composer.json` скрипт `"analyse": "phpstan analyse --memory-limit=1G"` — дальше просто `composer analyse`.
+
+**Существующий проект с накопленным кодом**
+
+На вопрос «существующий или новый проект» отвечаете «существующий». Скилл выполняет `vendor/bin/phpstan analyse --generate-baseline --memory-limit=1G`, добавляет `phpstan-baseline.neon` последней строкой в `includes`. Старые ошибки заморожены, новые ловятся сразу.
+
+#### Не делает
+
+Не поддерживает не-Laravel PHP-проекты (обычный PHPStan без Larastan), не устанавливает `phpstan/phpstan` явно (приходит транзитивно через `larastan/larastan`), не перезаписывает существующий `phpstan.neon` без подтверждения.
+
+---
+
 ## Tasar
 
 Tasar — система управления изменениями, встроенная в kodla. Каждое нетривиальное изменение проходит полный цикл: предложение → дизайн → задачи → реализация → архив. Артефакты хранятся в `tasar/changes/<name>/` и синхронизируются со спеками проекта.
@@ -648,6 +692,9 @@ Tasar — система управления изменениями, встро
 
 Настроить CI/CD пайплайн:
   kodla-woodpecker-ci (независимо от других скиллов)
+
+Настроить статический анализ Laravel:
+  kodla-larastan (независимо от других скиллов)
 
 Зафиксировать знания по технологии:
   kodla-reference (независимо от других скиллов)
