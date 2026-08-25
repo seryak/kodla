@@ -2,7 +2,7 @@
 name: kodla-init
 description: Настройка AI-контекста для проекта. Определяет технологический стек, генерирует .kodla/config.yaml, .kodla/DESCRIPTION.md, .kodla/rules/base.md и AGENTS.md. Используй когда нужно настроить проект для работы с AI, или когда пользователь говорит "настрой проект", "инициализируй AI", "init kodla".
 argument-hint: "[описание проекта]"
-allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(ln *) Bash(kodla config-update*) Bash(git *) AskUserQuestion
+allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(ln *) Bash(kodla config-update*) Bash(git *) Bash(tasar *) Bash(command *) AskUserQuestion
 ---
 
 # Kodla Init — Настройка AI-контекста проекта
@@ -14,6 +14,7 @@ allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(ln *) Bash(kodla config-u
 4. Генерирует `.kodla/DESCRIPTION.md`
 5. Генерирует `.kodla/rules/base.md`
 6. Генерирует `AGENTS.md`
+7. Проверяет доступность tasar и предлагает инициализировать
 
 ## Определение режима
 
@@ -208,7 +209,9 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 
 **Шаг 5: Сгенерировать `AGENTS.md`** (см. раздел [Генерация AGENTS.md](#генерация-agentsmd))
 
-**Шаг 6: Итоговое сообщение** на языке `language.ui`. Упомянуть создание (или, при конфликте, решение пользователя) `CLAUDE.md` как симлинка на `AGENTS.md`.
+**Шаг 6: Проверка tasar** (см. раздел [Проверка tasar](#проверка-tasar))
+
+**Шаг 7: Итоговое сообщение** на языке `language.ui`. Упомянуть создание (или, при конфликте, решение пользователя) `CLAUDE.md` как симлинка на `AGENTS.md`, и результат проверки tasar (инициализирован / пропущено).
 
 ---
 
@@ -265,7 +268,9 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 
 **Шаг 5: Сгенерировать `AGENTS.md`** (см. ниже)
 
-**Шаг 6: Итоговое сообщение** на языке `language.ui`. Упомянуть создание (или, при конфликте, решение пользователя) `CLAUDE.md` как симлинка на `AGENTS.md`.
+**Шаг 6: Проверка tasar** (см. раздел [Проверка tasar](#проверка-tasar))
+
+**Шаг 7: Итоговое сообщение** на языке `language.ui`. Упомянуть создание (или, при конфликте, решение пользователя) `CLAUDE.md` как симлинка на `AGENTS.md`, и результат проверки tasar (инициализирован / пропущено).
 
 ---
 
@@ -287,7 +292,7 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 > ___
 ```
 
-**Шаги 3–6:** Аналогично Режиму 2.
+**Шаги 3–7:** Аналогично Режиму 2.
 
 ---
 
@@ -358,6 +363,40 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
    - **Уже симлинк на `AGENTS.md`** → ничего не делать (идемпотентно).
    - **Существует как обычный файл или симлинк на что-то другое** → не перезаписывать молча. Спросить через `AskUserQuestion` на языке `language.ui`, заменить ли независимый `CLAUDE.md` симлинком на `AGENTS.md`, или оставить как есть.
 2. Если пользователь подтвердил замену — выполнить `ln -sf AGENTS.md CLAUDE.md`. Если отказался — оставить существующий `CLAUDE.md` без изменений и упомянуть это в итоговом сообщении.
+
+---
+
+## Проверка tasar
+
+Выполнить после генерации `AGENTS.md`, до итогового сообщения.
+
+**Условие пропуска:** если в проекте уже существует `tasar/` или `.tasar/` — пропустить этот шаг целиком, tasar уже инициализирован.
+
+**Проверка доступности:**
+1. Утилита: `command -v tasar` (bash) — доступна ли команда `tasar` в PATH.
+2. Навыки tasar: доступен ли навык `tasar-propose` в списке навыков, перечисленных агенту в текущей сессии (system-reminder со списком skills). Наличие `tasar-propose` считается индикатором, что `tasar-apply` и `tasar-archive` тоже установлены — они ставятся одним комплектом.
+
+Если хотя бы одно из двух условий не выполнено — пропустить шаг молча, без вопроса и без упоминания в итоговом сообщении.
+
+Если оба условия выполнены — спросить через `AskUserQuestion`:
+
+```
+AskUserQuestion: Обнаружены утилита tasar и навыки tasar-propose/apply/archive, но в этом проекте tasar ещё не инициализирован.
+Инициализировать tasar в этом проекте?
+
+Варианты:
+1. Да — выполнить tasar init (Рекомендуется)
+2. Нет — пропустить
+```
+
+**Если «Да»:**
+- Выполнить `tasar init` в корне проекта.
+- Проверить что создана директория `tasar/`.
+- Отметить в итоговом сообщении, что tasar инициализирован и что `/kodla-plan` теперь будет автоматически выполнять `/tasar-propose`.
+
+**Если «Нет»:**
+- Не выполнять `tasar init`.
+- Не упоминать в итоговом сообщении (пользователь уже видел и отклонил предложение в диалоге).
 
 ---
 
