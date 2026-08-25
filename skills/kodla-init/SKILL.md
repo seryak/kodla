@@ -2,7 +2,7 @@
 name: kodla-init
 description: Настройка AI-контекста для проекта. Определяет технологический стек, генерирует .kodla/config.yaml, .kodla/DESCRIPTION.md, .kodla/rules/base.md и AGENTS.md. Используй когда нужно настроить проект для работы с AI, или когда пользователь говорит "настрой проект", "инициализируй AI", "init kodla".
 argument-hint: "[описание проекта]"
-allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(kodla config-update*) Bash(git *) AskUserQuestion
+allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(ln *) Bash(kodla config-update*) Bash(git *) AskUserQuestion
 ---
 
 # Kodla Init — Настройка AI-контекста проекта
@@ -39,7 +39,7 @@ allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(kodla config-update*) Bas
 **Порядок разрешения (для каждой отсутствующей переменной):**
 1. `.kodla/config.yaml` → `language.ui` / `language.artifacts`
 2. `AGENTS.md` (поиск подсказок по языку контента)
-3. `CLAUDE.md` (поиск языковых инструкций)
+3. `CLAUDE.md` (поиск языковых инструкций) — актуально только пока `CLAUDE.md` не является симлинком на `AGENTS.md`; если это симлинк, он физически совпадает с `AGENTS.md` и отдельно проверять его не нужно
 4. `.kodla/rules/base.md` (если уже существует и явно задаёт язык)
 5. Спросить у пользователя
 
@@ -189,7 +189,7 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 
 **Шаг 5: Сгенерировать `AGENTS.md`** (см. раздел [Генерация AGENTS.md](#генерация-agentsmd))
 
-**Шаг 6: Итоговое сообщение** на языке `language.ui`.
+**Шаг 6: Итоговое сообщение** на языке `language.ui`. Упомянуть создание (или, при конфликте, решение пользователя) `CLAUDE.md` как симлинка на `AGENTS.md`.
 
 ---
 
@@ -246,7 +246,7 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 
 **Шаг 5: Сгенерировать `AGENTS.md`** (см. ниже)
 
-**Шаг 6: Итоговое сообщение** на языке `language.ui`.
+**Шаг 6: Итоговое сообщение** на языке `language.ui`. Упомянуть создание (или, при конфликте, решение пользователя) `CLAUDE.md` как симлинка на `AGENTS.md`.
 
 ---
 
@@ -319,6 +319,7 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 | [Заголовок: Файл]     | [Заголовок: Назначение] |
 |-----------------------|-------------------------|
 | AGENTS.md             | [описание]              |
+| CLAUDE.md             | Симлинк на AGENTS.md — для совместимости с Claude Code |
 | .kodla/config.yaml    | [описание]              |
 | .kodla/DESCRIPTION.md | [описание]              |
 | .kodla/rules/base.md  | [описание]              |
@@ -326,6 +327,18 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 ## [Заголовок: Правила для агентов]
 - [Правило: разбивай составные shell-команды на отдельные шаги]
 ```
+
+**Создание CLAUDE.md**
+
+`AGENTS.md` — формат, который уже понимают Codex, Cursor, Copilot и Gemini CLI. Claude Code ищет `CLAUDE.md`. Чтобы не поддерживать две независимые копии одного контекста, `CLAUDE.md` создаётся как символическая ссылка на `AGENTS.md`.
+
+После записи `AGENTS.md` выполнить:
+
+1. Проверить состояние `CLAUDE.md`:
+   - **Не существует** → создать симлинк: `ln -sf AGENTS.md CLAUDE.md` (из корня проекта, относительный таргет).
+   - **Уже симлинк на `AGENTS.md`** → ничего не делать (идемпотентно).
+   - **Существует как обычный файл или симлинк на что-то другое** → не перезаписывать молча. Спросить через `AskUserQuestion` на языке `language.ui`, заменить ли независимый `CLAUDE.md` симлинком на `AGENTS.md`, или оставить как есть.
+2. Если пользователь подтвердил замену — выполнить `ln -sf AGENTS.md CLAUDE.md`. Если отказался — оставить существующий `CLAUDE.md` без изменений и упомянуть это в итоговом сообщении.
 
 ---
 
@@ -338,6 +351,7 @@ kodla config-update --target .kodla/config.yaml --payload .kodla/config.update.j
 5. **Использовать `kodla config-update`** — никогда не записывать `.kodla/config.yaml` напрямую без хелпера
 6. **Языковые настройки фиксированы** — после разрешения не менять язык в середине работы
 7. **Skill-context обязателен** — если `.kodla/skill-context/kodla-init/SKILL.md` существует, применять его ко всем генерируемым артефактам
+8. **`CLAUDE.md` не редактируется напрямую** — это симлинк на `AGENTS.md`; все правки контента вносятся только в `AGENTS.md`
 
 ## КРИТИЧНО: Не реализовывать проект
 
