@@ -35,6 +35,7 @@ allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(ln *) Bash(kodla config-u
 **Языковые переменные:**
 - `language.ui` — язык для `AskUserQuestion`, пояснений, итогового сообщения
 - `language.artifacts` — язык для всех генерируемых файлов: `DESCRIPTION.md`, `rules/base.md`, `AGENTS.md`
+- `git.commit_language` — язык сообщений коммитов (используется `/kodla-commit`)
 
 **Порядок разрешения (для каждой отсутствующей переменной):**
 1. `.kodla/config.yaml` → `language.ui` / `language.artifacts`
@@ -64,6 +65,23 @@ AskUserQuestion: На каком языке генерировать файлы 
 2. English (en)
 3. Другой — указать вручную
 ```
+
+**Язык коммитов:**
+
+Разреши `git.commit_language` в рамках этого же шага.
+
+1. Если `.kodla/config.yaml` уже содержит `git.commit_language` — использовать, не спрашивать.
+2. Иначе — спросить через `AskUserQuestion`:
+
+```
+AskUserQuestion: На каком языке писать сообщения коммитов?
+Варианты:
+1. English (en) — Рекомендуется для open-source
+2. Русский (ru)
+3. Другой — указать код языка вручную
+```
+
+Значение используется навыком `/kodla-commit`.
 
 Языковые настройки фиксируются на весь запуск и не меняются.
 
@@ -99,11 +117,12 @@ AskUserQuestion: На каком языке генерировать файлы 
   "set": {
     "language.ui": "<разрешённый-ui>",
     "language.artifacts": "<разрешённый-artifacts>",
-    "language.technical_terms": "keep"
+    "language.technical_terms": "keep",
+    "git.commit_language": "<разрешённый-commit-language>"
   },
   "fillMissing": {
     "git.base_branch": "main",
-    "git.branch_prefix": "feature/"
+    "git.branch_prefix": "feature/",
     "rules.base": ".kodla/rules/base.md"
   }
 }
