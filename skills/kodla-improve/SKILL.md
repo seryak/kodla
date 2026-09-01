@@ -1,6 +1,6 @@
 ---
 name: kodla-improve
-description: Вторая итерация планирования — углублённый анализ существующего плана, поиск пробелов и улучшение задач. Работает с планами от /kodla:plan (.kodla/plans/) и от /tasar-propose (tasar/ или .tasar/).
+description: Вторая итерация планирования — углублённый анализ существующего плана, поиск пробелов и улучшение задач. Работает с планами от /kodla-plan (.kodla/plans/) и от /tasar-propose (tasar/ или .tasar/).
 argument-hint: "[--list] [@<путь-к-плану>] [инструкции по улучшению]"
 allowed-tools: Read Write Edit Glob Grep Bash(kodla *) Bash(ls *) Bash(test *) Bash(find *) AskUserQuestion Agent
 version: 1.0.0
@@ -58,7 +58,7 @@ ls -1 .kodla/plans/*.md 2>/dev/null
 Активный план не найден.
 
 Создай план сначала:
-- /kodla:plan <описание>       — для проекта без tasar
+- /kodla-plan <описание>       — для проекта без tasar
 - /tasar-propose <описание>    — для проекта с tasar
 ```
 → СТОП.
@@ -88,8 +88,8 @@ ls -1 .kodla/plans/*.md 2>/dev/null
   tasar/changes/other-change/tasks.md  — 0/3 задач выполнено
 
 Использование:
-  /kodla:improve @tasar/changes/my-feature/tasks.md
-  /kodla:improve добавить обработку ошибок
+  /kodla-improve @tasar/changes/my-feature/tasks.md
+  /kodla-improve добавить обработку ошибок
 ```
 
 → СТОП.

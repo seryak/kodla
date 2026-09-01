@@ -2,7 +2,7 @@
 name: kodla-check-tasks
 description: >-
   Проверить реализацию плана: все задачи выполнены, код рабочий, нет незавершённых маркеров.
-  Используй после /kodla:implement-plan или когда нужно убедиться что "всё сделано".
+  Используй после /kodla-implement-plan или когда нужно убедиться что "всё сделано".
 argument-hint: "[--strict] [@plan-file]"
 allowed-tools: Read Glob Grep Bash(composer *) Bash(php *) Bash(./vendor/bin/*) Bash(npm *) Bash(npx *) Bash(yarn *) Bash(pnpm *) Bash(bun *) Bash(go *) Bash(python *) Bash(cargo *) Bash(make *) Bash(task *) Bash(just *) Bash(mage *) TaskList TaskGet AskUserQuestion
 ---
@@ -68,7 +68,7 @@ allowed-tools: Read Glob Grep Bash(composer *) Bash(php *) Bash(./vendor/bin/*) 
 - Ни одного → сообщить:
   ```
   Активный план не найден.
-  Создай план через /kodla:plan или /tasar:propose
+  Создай план через /kodla-plan или /tasar-propose
   ```
   → СТОП
 
@@ -306,7 +306,7 @@ Grep: env\(|getenv\(|\$_ENV\[|\$_SERVER\[|process\.env\.|os\.Getenv\(|os\.enviro
 2. Задача #5 — обновить docs/api.md с описанием новых endpoints
 3. Удалить var_dump() в src/Services/UserService.php:45
 
-Запусти /kodla:implement-plan чтобы продолжить реализацию.
+Запусти /kodla-implement-plan чтобы продолжить реализацию.
 Для точечных багов запусти /kodla-fix <описание проблемы>.
 ```
 
@@ -338,7 +338,7 @@ AskUserQuestion: Реализация проверена. Покрыть вып�
 ### Стандартный запуск
 
 ```
-/kodla:check-tasks
+/kodla-check-tasks
 ```
 
 Проверяет активный план (tasar/changes/ → .tasar/changes/ → .kodla/plans/).
@@ -346,14 +346,14 @@ AskUserQuestion: Реализация проверена. Покрыть вып�
 ### Явное указание файла плана
 
 ```
-/kodla:check-tasks --strict @tasar/changes/my-feature/tasks.md
-/kodla:check-tasks @.kodla/plans/refactor-api.md
+/kodla-check-tasks --strict @tasar/changes/my-feature/tasks.md
+/kodla-check-tasks @.kodla/plans/refactor-api.md
 ```
 
 ### Strict mode
 
 ```
-/kodla:check-tasks --strict @tasar/changes/my-feature/tasks.md
+/kodla-check-tasks --strict @tasar/changes/my-feature/tasks.md
 ```
 
 В strict mode:

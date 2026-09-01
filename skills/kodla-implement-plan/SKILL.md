@@ -53,7 +53,7 @@ allowed-tools: Read Glob Grep TaskList TaskGet TaskUpdate AskUserQuestion Agent
 tasar/changes/add-user-auth/tasks.md       3/8 задач выполнено
 .kodla/plans/refactor-api.md               0/5 задач выполнено
 
-Используй /kodla:implement-plan @<путь> для выбора конкретного плана.
+Используй /kodla-implement-plan @<путь> для выбора конкретного плана.
 ```
 
 ---
@@ -141,7 +141,7 @@ tasar/changes/add-user-auth/tasks.md       3/8 задач выполнено
 
 4. Не найдено → сообщить:
    "Активный план не найден.
-    Создай план через /kodla:plan или /tasar:propose"
+    Создай план через /kodla-plan или /tasar-propose"
    → СТОП
 ```
 
@@ -270,7 +270,7 @@ TaskUpdate(taskId, status: "completed")
 Выполнено: 4/8 задач
 Следующая задача: #5 — Добавить пагинацию
 
-Чтобы продолжить позже: /kodla:implement-plan
+Чтобы продолжить позже: /kodla-implement-plan
 ```
 
 **Для паузы:**
@@ -280,7 +280,7 @@ TaskUpdate(taskId, status: "completed")
 Выполнено: 4/8 задач
 Следующая задача: #5 — Добавить пагинацию
 
-Для продолжения запусти: /kodla:implement-plan
+Для продолжения запусти: /kodla-implement-plan
 ```
 
 ---
@@ -336,7 +336,7 @@ AskUserQuestion: Все задачи выполнены. Что делаем д�
 ### Запуск / возобновление
 
 ```
-/kodla:implement-plan
+/kodla-implement-plan
 ```
 
 Продолжает с первой незавершённой задачи.
@@ -344,7 +344,7 @@ AskUserQuestion: Все задачи выполнены. Что делаем д�
 ### Список доступных планов
 
 ```
-/kodla:implement-plan --list
+/kodla-implement-plan --list
 ```
 
 Перечисляет планы из tasar/changes/ и .kodla/plans/ и завершается.
@@ -352,8 +352,8 @@ AskUserQuestion: Все задачи выполнены. Что делаем д�
 ### Явное указание файла плана
 
 ```
-/kodla:implement-plan @tasar/changes/my-feature/tasks.md
-/kodla:implement-plan @.kodla/plans/refactor-api.md
+/kodla-implement-plan @tasar/changes/my-feature/tasks.md
+/kodla-implement-plan @.kodla/plans/refactor-api.md
 ```
 
 Использует указанный файл вместо автоопределения.
@@ -361,7 +361,7 @@ AskUserQuestion: Все задачи выполнены. Что делаем д�
 ### Начать с конкретной задачи
 
 ```
-/kodla:implement-plan 5
+/kodla-implement-plan 5
 ```
 
 Начинает с задачи №5 (полезно для повтора или пропуска).
@@ -369,7 +369,7 @@ AskUserQuestion: Все задачи выполнены. Что делаем д�
 ### Только статус
 
 ```
-/kodla:implement-plan status
+/kodla-implement-plan status
 ```
 
 Показывает прогресс без выполнения.
