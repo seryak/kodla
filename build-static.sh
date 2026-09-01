@@ -86,10 +86,12 @@ require 'phar://kodla.phar/vendor/autoload.php';
 use Symfony\Component\Console\Application;
 use Kodla\Commands\InitCommand;
 use Kodla\Commands\ConfigUpdateCommand;
+use Kodla\Commands\PlanInitCommand;
 
 $app = new Application('kodla', '1.0.0');
 $app->add(new InitCommand());
 $app->add(new ConfigUpdateCommand());
+$app->add(new PlanInitCommand());
 $app->run();
 __HALT_COMPILER();
 STUB;

@@ -39,6 +39,33 @@ paths:
   # Rules directory (area-specific rules)
   rules: .kodla/rules/
 
+  # Implementation plans directory
+  plans: .kodla/plans/
+
+  # Saved research file
+  research: .kodla/RESEARCH.md
+
+  # Project roadmap file
+  roadmap: .kodla/ROADMAP.md
+
+  # Bug-fix plan file
+  fix_plan: .kodla/FIX_PLAN.md
+
+  # Experience patches directory
+  patches: .kodla/patches/
+
+  # Skill evolution reports directory
+  evolutions: .kodla/evolutions/
+
+  # Reusable knowledge references directory
+  references: .kodla/references/
+
+  # Detailed project documentation directory
+  docs: docs/
+
+  # Main Tasar specifications directory
+  specs: tasar/specs/
+
 # =============================================================================
 # Workflow Settings
 # =============================================================================
@@ -47,6 +74,17 @@ workflow:
   # Automatically create .kodla/ directories when missing
   auto_create_dirs: true
 
+  # Verification strictness: normal | strict
+  verify_mode: normal
+
+# =============================================================================
+# Rules Hierarchy
+# =============================================================================
+
+rules:
+  # Base project conventions
+  base: .kodla/rules/base.md
+
 # =============================================================================
 # Git Settings
 # =============================================================================
@@ -54,6 +92,14 @@ workflow:
 git:
   # Whether this project uses git-aware workflows
   enabled: true
+
+  # Language for Conventional Commit messages
+  # Default: en
+  commit_language: en
+
+  # Skip the push prompt after creating a commit
+  # Default: true
+  skip_push_after_commit: true
 
   # Default branch for diff/review/merge targets
   base_branch: main

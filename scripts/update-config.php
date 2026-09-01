@@ -17,10 +17,28 @@
 
 const SECTION_KEYS = [
     'language' => ['ui', 'artifacts', 'technical_terms'],
-    'paths'    => ['description', 'architecture', 'rules_file', 'rules'],
-    'workflow' => ['auto_create_dirs'],
-    'git'      => ['enabled', 'base_branch', 'create_branches', 'branch_prefix'],
+    'paths'    => [
+        'description', 'architecture', 'rules_file', 'rules', 'plans', 'research', 'roadmap',
+        'fix_plan', 'patches', 'evolutions', 'references', 'docs', 'specs',
+    ],
+    'workflow' => ['auto_create_dirs', 'verify_mode'],
+    'git'      => ['enabled', 'base_branch', 'create_branches', 'branch_prefix', 'commit_language', 'skip_push_after_commit'],
+    'rules'    => ['base'],
 ];
+
+function isManagedKeyPath(string $keyPath): bool
+{
+    if (preg_match('/^rules\.[a-z][a-z0-9_-]*$/', $keyPath)) {
+        return true;
+    }
+
+    [$section, $key] = explode('.', $keyPath, 2) + [null, null];
+
+    return $section !== null
+        && $key !== null
+        && isset(SECTION_KEYS[$section])
+        && in_array($key, SECTION_KEYS[$section], true);
+}
 
 function fail(int $code, string $message): never
 {
@@ -79,20 +97,13 @@ function parsePayload(string $raw): array
         fail(3, 'Payload mode must be "create" or "merge"');
     }
 
-    $allowed = [];
-    foreach (SECTION_KEYS as $section => $keys) {
-        foreach ($keys as $key) {
-            $allowed[] = "$section.$key";
-        }
-    }
-
     foreach (['set', 'fillMissing'] as $field) {
         $map = $data[$field] ?? [];
         if (!is_array($map)) {
             fail(3, "$field must be an object");
         }
         foreach ($map as $keyPath => $value) {
-            if (!in_array($keyPath, $allowed)) {
+            if (!isManagedKeyPath($keyPath)) {
                 fail(3, "Unknown managed key path: $keyPath");
             }
             if (!is_string($value) && !is_bool($value)) {
@@ -182,7 +193,7 @@ function applyToLines(array $lines, array $set, array $fillMissing): array
             $rest = $m[2];
             $keyPath = "$currentSection.$key";
 
-            if (!isset(SECTION_KEYS[$currentSection]) || !in_array($key, SECTION_KEYS[$currentSection])) {
+        if (!isManagedKeyPath($keyPath)) {
                 continue;
             }
 
@@ -235,9 +246,17 @@ function insertMissingKeys(array $lines, array $fillMissing, array $updatedKeys)
             }
         }
 
-        if ($insertAfter !== -1) {
+        if ($sectionLine === -1) {
+            if ($lines !== [] && end($lines) !== '') {
+                $lines[] = '';
+            }
+            $lines[] = "$section:";
+            $lines[] = "  $key: " . formatScalar($value);
+        } elseif ($insertAfter !== -1) {
             array_splice($lines, $insertAfter + 1, 0, ["  $key: " . formatScalar($value)]);
         }
+
+        $updatedKeys[$keyPath] = true;
     }
 
     return $lines;
@@ -246,7 +265,8 @@ function insertMissingKeys(array $lines, array $fillMissing, array $updatedKeys)
 function applyCreate(string $templateText, array $payload): string
 {
     $lines = explode("\n", rtrim(str_replace("\r\n", "\n", $templateText)));
-    [$lines] = applyToLines($lines, $payload['set'], []);
+    [$lines, $updatedKeys] = applyToLines($lines, $payload['set'], []);
+    $lines = insertMissingKeys($lines, $payload['set'], $updatedKeys);
     return implode("\n", $lines) . "\n";
 }
 
@@ -254,7 +274,8 @@ function applyMerge(string $targetText, array $payload): string
 {
     $lines = explode("\n", rtrim(str_replace("\r\n", "\n", $targetText)));
     [$lines, $updatedKeys] = applyToLines($lines, $payload['set'], $payload['fillMissing']);
-    $lines = insertMissingKeys($lines, $payload['fillMissing'], $updatedKeys);
+    $missingValues = array_merge($payload['fillMissing'], $payload['set']);
+    $lines = insertMissingKeys($lines, $missingValues, $updatedKeys);
     return implode("\n", $lines) . "\n";
 }
 

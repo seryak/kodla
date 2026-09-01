@@ -1,4 +1,4 @@
-[Назад к README](../README.md)
+[← Справочник CLI-команд](cli.md) · [Назад к README](../README.md)
 
 # Соответствие kodla ↔ aif
 
@@ -66,3 +66,8 @@
 | `aif-qa-ru.md` | Тестирование (QA) |
 | `aif-roadmap-ru.md` | Стратегическое планирование |
 | `aif-architecture-ru.md` | Архитектурные паттерны |
+
+## Смотри также
+
+- [Справочник CLI-команд](cli.md) — команды бинарника kodla и внешней Tasar CLI.
+- [README](../README.md) — установка и обзор Kodla.

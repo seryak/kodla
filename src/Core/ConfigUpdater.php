@@ -6,9 +6,13 @@ class ConfigUpdater
 {
     private const SECTION_KEYS = [
         'language' => ['ui', 'artifacts', 'technical_terms'],
-        'paths'    => ['description', 'architecture', 'rules_file', 'rules'],
-        'workflow' => ['auto_create_dirs'],
-        'git'      => ['enabled', 'base_branch', 'create_branches', 'branch_prefix'],
+        'paths'    => [
+            'description', 'architecture', 'rules_file', 'rules', 'plans', 'research', 'roadmap',
+            'fix_plan', 'patches', 'evolutions', 'references', 'docs', 'specs',
+        ],
+        'workflow' => ['auto_create_dirs', 'verify_mode'],
+        'git'      => ['enabled', 'base_branch', 'create_branches', 'branch_prefix', 'commit_language', 'skip_push_after_commit'],
+        'rules'    => ['base'],
     ];
 
     private string $templatePath;
@@ -65,20 +69,13 @@ class ConfigUpdater
             throw new \InvalidArgumentException('Payload mode must be "create" or "merge"');
         }
 
-        $allowed = [];
-        foreach (self::SECTION_KEYS as $section => $keys) {
-            foreach ($keys as $key) {
-                $allowed[] = "$section.$key";
-            }
-        }
-
         foreach (['set', 'fillMissing'] as $field) {
             $map = $data[$field] ?? [];
             if (!is_array($map)) {
                 throw new \InvalidArgumentException("$field must be an object");
             }
             foreach ($map as $keyPath => $value) {
-                if (!in_array($keyPath, $allowed)) {
+                if (!$this->isManagedKeyPath($keyPath)) {
                     throw new \InvalidArgumentException("Unknown managed key path: $keyPath");
                 }
                 if (!is_string($value) && !is_bool($value)) {
@@ -100,6 +97,20 @@ class ConfigUpdater
             return $value ? 'true' : 'false';
         }
         return (string) $value;
+    }
+
+    private function isManagedKeyPath(string $keyPath): bool
+    {
+        if (preg_match('/^rules\.[a-z][a-z0-9_-]*$/', $keyPath)) {
+            return true;
+        }
+
+        [$section, $key] = explode('.', $keyPath, 2) + [null, null];
+
+        return $section !== null
+            && $key !== null
+            && isset(self::SECTION_KEYS[$section])
+            && in_array($key, self::SECTION_KEYS[$section], true);
     }
 
     private function isIncompleteValue(string $value): bool
@@ -159,7 +170,7 @@ class ConfigUpdater
                 $rest = $m[2];
                 $keyPath = "$currentSection.$key";
 
-                if (!isset(self::SECTION_KEYS[$currentSection]) || !in_array($key, self::SECTION_KEYS[$currentSection])) {
+                if (!$this->isManagedKeyPath($keyPath)) {
                     continue;
                 }
 
@@ -207,9 +218,17 @@ class ConfigUpdater
                 }
             }
 
-            if ($insertAfter !== -1) {
+            if ($sectionLine === -1) {
+                if ($lines !== [] && end($lines) !== '') {
+                    $lines[] = '';
+                }
+                $lines[] = "$section:";
+                $lines[] = "  $key: " . $this->formatScalar($value);
+            } elseif ($insertAfter !== -1) {
                 array_splice($lines, $insertAfter + 1, 0, ["  $key: " . $this->formatScalar($value)]);
             }
+
+            $updatedKeys[$keyPath] = true;
         }
 
         return $lines;
@@ -218,7 +237,8 @@ class ConfigUpdater
     private function applyCreate(string $templateText, array $payload): string
     {
         $lines = explode("\n", rtrim(str_replace("\r\n", "\n", $templateText)));
-        [$lines] = $this->applyToLines($lines, $payload['set'], []);
+        [$lines, $updatedKeys] = $this->applyToLines($lines, $payload['set'], []);
+        $lines = $this->insertMissingKeys($lines, $payload['set'], $updatedKeys);
         return implode("\n", $lines) . "\n";
     }
 
@@ -226,7 +246,8 @@ class ConfigUpdater
     {
         $lines = explode("\n", rtrim(str_replace("\r\n", "\n", $targetText)));
         [$lines, $updatedKeys] = $this->applyToLines($lines, $payload['set'], $payload['fillMissing']);
-        $lines = $this->insertMissingKeys($lines, $payload['fillMissing'], $updatedKeys);
+        $missingValues = array_merge($payload['fillMissing'], $payload['set']);
+        $lines = $this->insertMissingKeys($lines, $missingValues, $updatedKeys);
         return implode("\n", $lines) . "\n";
     }
 }
