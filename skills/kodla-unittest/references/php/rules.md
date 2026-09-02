@@ -72,7 +72,8 @@ final class PaymentServiceTest extends TestCase
 
 Заметки:
 - `declare(strict_types=1);` — только если используется в проекте; смотри существующие тесты.
-- `final class` — тоже проектная конвенция; многие кодовые базы предпочитают, но не все.
+- Namespace зеркалит тестируемый слой приложения, например `Tests\Unit\Core` (в Laravel-проекте с `App\Tests\`-маппингом в composer.json — `App\Tests\Unit\Core`) — root наследуй из PSR-4-конфигурации целевого проекта, не навязывай чужой.
+- Имя класса — `<ТестируемыйКласс>Test`, класс объявляй `final`. Это дефолт референса; стиль существующих тестов проекта приоритетнее — если там `final` не используется, не навязывай.
 - Атрибут `#[Test]` (PHPUnit 10+) заменяет аннотацию `/** @test */`. Смешивать оба в одном файле — запах.
 - `self::assert*` vs `$this->assert*` — оба работают; выбирай тот, что в проекте.
 
@@ -84,6 +85,30 @@ final class PaymentServiceTest extends TestCase
 - `getMockBuilder(X::class)->disableOriginalConstructor()->getMock()` — когда конструктор требует аргументы, которые не хочется предоставлять.
 
 Избегай `getMockBuilder`, если не нужны его специфичные опции — `createMock` это современный путь.
+
+### `#[CoversClass]` и `#[TestDox]` (PHPUnit 10+, только class-based тесты)
+
+Применимо только к class-based PHPUnit-тестам. Pest-тесты (`it()`/`test()`) — функции, а не объявления класса/метода, вешать PHP-атрибут некуда. Эквивалент для Pest — та же формулировка первым аргументом `it('...')`/`test('...')`, на языке `language.code_comments`.
+
+```php
+#[CoversClass(PaymentService::class)]
+final class PaymentServiceTest extends TestCase
+{
+    #[Test]
+    #[TestDox('charge() бросает InvalidAmountException при отрицательной сумме')]
+    public function it_throws_when_amount_is_negative(): void
+    {
+        $this->expectException(InvalidAmountException::class);
+
+        $this->service->charge($card, -100);
+    }
+}
+```
+
+- `#[CoversClass(X::class)]` — по одному на каждый класс, чьё поведение проверяется тестом. На PHPUnit ≤9 — аннотация `/** @covers \X::class */` вместо атрибута. Если `phpunit.xml` уже считает покрытие через `<source><include>` (см. пример ниже) — `CoversClass` не нужен для самого измерения покрытия; это отдельная дисциплина трассируемости "тест → класс", а не обязательное условие для coverage-отчётов.
+- `#[TestDox('...')]` — на каждый тестовый метод, на языке `language.code_comments` из `.kodla/config.yaml` (по умолчанию `ru`). На PHPUnit ≤9 — аннотация `/** @testdox ... */`.
+- Формулировка: `<метод>() <поведение>` — начинай со имени тестируемого метода и его сигнатуры вызова (`create()`), затем опиши конкретный успешный сценарий или условие ошибки. Пример: `create() бросает RuntimeException если контейнер вернул не контроллер`.
+- `TestDox` — человекочитаемое описание для отчёта, не замена осмысленному имени метода: само имя (`it_...`/`test_...`) остаётся описательным независимо от наличия `TestDox` (антипаттерн «generic-имена тестов», см. ниже, действует и здесь).
 
 ### Базовые опции phpunit.xml
 

@@ -36,7 +36,7 @@ version: 1.0.0
 - `paths.architecture` — архитектура проекта (по умолчанию: `.kodla/ARCHITECTURE.md`)
 - `paths.rules` / `rules.base` — правила проекта (по умолчанию: `.kodla/rules/`)
 - `language.ui` — язык взаимодействия (по умолчанию: `ru`)
-- `language.artifacts` — язык тестов и комментариев (по умолчанию: `ru`)
+- `language.code_comments` — язык тестов и комментариев, включая `TestDox`-описания (по умолчанию: `ru`)
 
 **Skill-context (правила `/kodla-evolve`):**
 
