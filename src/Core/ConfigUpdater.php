@@ -5,7 +5,7 @@ namespace Kodla\Core;
 class ConfigUpdater
 {
     private const SECTION_KEYS = [
-        'language' => ['ui', 'artifacts', 'technical_terms'],
+        'language' => ['ui', 'artifacts', 'technical_terms', 'code_comments'],
         'paths'    => [
             'description', 'architecture', 'rules_file', 'rules', 'plans', 'research', 'roadmap',
             'fix_plan', 'patches', 'evolutions', 'references', 'docs', 'specs',

@@ -37,6 +37,7 @@ allowed-tools: Read Glob Grep Write Bash(mkdir *) Bash(ln *) Bash(kodla config-u
 **Языковые переменные:**
 - `language.ui` — язык для `AskUserQuestion`, пояснений, итогового сообщения
 - `language.artifacts` — язык для всех генерируемых файлов: `DESCRIPTION.md`, `rules/base.md`, `AGENTS.md`
+- `language.code_comments` — язык комментариев в коде проекта
 - `git.commit_language` — язык сообщений коммитов (используется `/kodla-commit`)
 
 **Порядок разрешения (для каждой отсутствующей переменной):**
@@ -90,6 +91,10 @@ AskUserQuestion: На каком языке писать сообщения ко
 Если в существующем `.kodla/config.yaml` уже задано `language.technical_terms`,
 сохрани значение. Если ключ отсутствует — запиши `keep`.
 
+Аналогично для `language.code_comments`: если ключ уже задан в существующем
+`.kodla/config.yaml` — сохрани значение, не спрашивать. Если ключ отсутствует —
+запиши `ru` (значение по умолчанию), без вопроса пользователю.
+
 ---
 
 ## Project skill-context
@@ -120,6 +125,7 @@ AskUserQuestion: На каком языке писать сообщения ко
     "language.ui": "<разрешённый-ui>",
     "language.artifacts": "<разрешённый-artifacts>",
     "language.technical_terms": "keep",
+    "language.code_comments": "<разрешённый-code-comments>",
     "git.commit_language": "<разрешённый-commit-language>"
   },
   "fillMissing": {

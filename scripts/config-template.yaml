@@ -22,6 +22,11 @@ language:
   # Default: keep
   technical_terms: keep
 
+  # Language for comments written in generated/edited code
+  # Options: en, ru, de, fr, es, zh, ja, ko, pt, it
+  # Default: ru
+  code_comments: ru
+
 # =============================================================================
 # Path Configuration
 # =============================================================================
